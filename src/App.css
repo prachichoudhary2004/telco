@@ -1,0 +1,9 @@
+/* Additional app-specific styles */
+.mobile-nav-height {
+  padding-bottom: 80px;
+}
+
+.activity-card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
