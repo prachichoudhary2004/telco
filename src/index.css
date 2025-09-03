@@ -86,3 +86,16 @@ body {
   0% { transform: scale(0) rotate(-180deg); opacity: 0; }
   100% { transform: scale(1) rotate(0deg); opacity: 1; }
 }
+
+/* Mobile navigation spacing */
+.mobile-nav-height {
+  min-height: calc(100vh - 80px);
+  padding-bottom: 80px;
+}
+
+/* Game canvas responsive */
+.game-canvas {
+  max-width: 100%;
+  height: auto;
+  aspect-ratio: 4/3;
+}

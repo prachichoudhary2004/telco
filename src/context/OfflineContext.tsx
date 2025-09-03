@@ -3,8 +3,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react'
 interface OfflineContextType {
   isOnline: boolean
   offlineQueue: any[]
-  addToQueue: (item: any) => void
-  processQueue: () => void
+  addToQueue: (action: any) => void
   clearQueue: () => void
 }
 
@@ -15,28 +14,11 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
   const [offlineQueue, setOfflineQueue] = useState<any[]>([])
 
   useEffect(() => {
-    const handleOnline = () => {
-      setIsOnline(true)
-      // Auto-process queue when coming back online
-      setTimeout(processQueue, 1000)
-    }
-
-    const handleOffline = () => {
-      setIsOnline(false)
-    }
+    const handleOnline = () => setIsOnline(true)
+    const handleOffline = () => setIsOnline(false)
 
     window.addEventListener('online', handleOnline)
     window.addEventListener('offline', handleOffline)
-
-    // Load offline queue from localStorage
-    const savedQueue = localStorage.getItem('offline-queue')
-    if (savedQueue) {
-      try {
-        setOfflineQueue(JSON.parse(savedQueue))
-      } catch (error) {
-        console.error('Error loading offline queue:', error)
-      }
-    }
 
     return () => {
       window.removeEventListener('online', handleOnline)
@@ -44,29 +26,21 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
     }
   }, [])
 
-  const addToQueue = (item: any) => {
-    const newQueue = [...offlineQueue, { ...item, timestamp: Date.now() }]
-    setOfflineQueue(newQueue)
-    localStorage.setItem('offline-queue', JSON.stringify(newQueue))
-  }
+  // Process queue when coming back online
+  useEffect(() => {
+    if (isOnline && offlineQueue.length > 0) {
+      // Process queued actions
+      console.log('Processing offline queue:', offlineQueue)
+      setOfflineQueue([])
+    }
+  }, [isOnline, offlineQueue])
 
-  const processQueue = () => {
-    if (offlineQueue.length === 0) return
-
-    // Simulate processing offline actions
-    console.log('Processing offline queue:', offlineQueue)
-    
-    // In a real app, you would sync these with your backend
-    offlineQueue.forEach(item => {
-      console.log('Syncing:', item.type, item.data)
-    })
-
-    clearQueue()
+  const addToQueue = (action: any) => {
+    setOfflineQueue(prev => [...prev, { ...action, timestamp: Date.now() }])
   }
 
   const clearQueue = () => {
     setOfflineQueue([])
-    localStorage.removeItem('offline-queue')
   }
 
   return (
@@ -74,7 +48,6 @@ export function OfflineProvider({ children }: { children: React.ReactNode }) {
       isOnline,
       offlineQueue,
       addToQueue,
-      processQueue,
       clearQueue
     }}>
       {children}

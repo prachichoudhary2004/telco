@@ -1,9 +1,9 @@
 import React, { useState } from 'react'
 import { User, Settings, Trophy, Flame, Edit3, Save, X, Volume2, VolumeX, Globe, LogOut } from 'lucide-react'
-import { useApp } from '../context/AppContext'
+import { useAuth } from '../context/AuthContext'
 
 export default function ProfilePage() {
-  const { state, dispatch, speak } = useApp()
+  const { state, updateProfile, logout } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
   const [editForm, setEditForm] = useState({
     name: state.user?.name || '',
@@ -11,42 +11,53 @@ export default function ProfilePage() {
   })
 
   if (!state.user) {
-    return <div>Loading...</div>
+    return <div className="flex items-center justify-center h-screen">
+      <div className="text-white">Loading...</div>
+    </div>
   }
 
-  const handleSave = () => {
-    if (state.user) {
-      const updatedUser = {
-        ...state.user,
+  const handleSave = async () => {
+    try {
+      await updateProfile({
         name: editForm.name,
         email: editForm.email
-      }
-      dispatch({ type: 'SET_USER', payload: updatedUser })
+      })
+      setIsEditing(false)
+    } catch (error) {
+      console.error('Failed to update profile:', error)
     }
-    setIsEditing(false)
   }
 
-  const handleLanguageChange = (language: 'en' | 'hi') => {
-    dispatch({ type: 'SET_LANGUAGE', payload: language })
-    speak(language === 'en' ? 'Language changed to English' : 'भाषा हिंदी में बदल गई')
+  const handleLanguageChange = async (language: 'en' | 'hi') => {
+    try {
+      await updateProfile({ language })
+    } catch (error) {
+      console.error('Failed to update language:', error)
+    }
   }
 
-  const handleTTSToggle = () => {
-    dispatch({ type: 'TOGGLE_TTS' })
-    const message = state.user?.ttsEnabled ? 'Text-to-speech disabled' : 'Text-to-speech enabled'
-    setTimeout(() => speak(message), 100)
+  const handleTTSToggle = async () => {
+    try {
+      await updateProfile({ tts_enabled: !state.user.tts_enabled })
+    } catch (error) {
+      console.error('Failed to toggle TTS:', error)
+    }
   }
 
-  const handleLogout = () => {
-    dispatch({ type: 'LOGOUT' })
-    window.location.href = '/'
+  const handleLogout = async () => {
+    try {
+      await logout()
+      window.location.href = '/'
+    } catch (error) {
+      console.error('Logout failed:', error)
+    }
   }
 
   const nextLevelXP = (state.user.level * 100)
   const progressPercentage = (state.user.xp % 100)
 
-  const earnedBadges = state.badges.filter(badge => badge.earned)
-  const availableBadges = state.badges.filter(badge => !badge.earned)
+  const earnedBadges = state.user.badges || []
+  const availableBadges = [] // We'll implement this later with a badges API
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
@@ -235,7 +246,7 @@ export default function ProfilePage() {
                 <button
                   onClick={() => handleLanguageChange('en')}
                   className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                    state.language === 'en'
+                    state.user.language === 'en'
                       ? 'bg-indigo-600 text-white'
                       : 'text-slate-300 hover:text-white'
                   }`}
@@ -245,7 +256,7 @@ export default function ProfilePage() {
                 <button
                   onClick={() => handleLanguageChange('hi')}
                   className={`px-3 py-1 rounded text-sm font-medium transition-colors ${
-                    state.language === 'hi'
+                    state.user.language === 'hi'
                       ? 'bg-indigo-600 text-white'
                       : 'text-slate-300 hover:text-white'
                   }`}
@@ -258,7 +269,7 @@ export default function ProfilePage() {
             {/* TTS Setting */}
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-3">
-                {state.user.ttsEnabled ? (
+                {state.user.tts_enabled ? (
                   <Volume2 className="text-slate-400" size={20} />
                 ) : (
                   <VolumeX className="text-slate-400" size={20} />
@@ -271,12 +282,12 @@ export default function ProfilePage() {
               <button
                 onClick={handleTTSToggle}
                 className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  state.user.ttsEnabled ? 'bg-indigo-600' : 'bg-slate-600'
+                  state.user.tts_enabled ? 'bg-indigo-600' : 'bg-slate-600'
                 }`}
               >
                 <span
                   className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    state.user.ttsEnabled ? 'translate-x-6' : 'translate-x-1'
+                    state.user.tts_enabled ? 'translate-x-6' : 'translate-x-1'
                   }`}
                 />
               </button>
@@ -293,11 +304,11 @@ export default function ProfilePage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">{state.user.completedActivities.length}</div>
+              <div className="text-2xl font-bold text-white">{state.user.completedActivities?.length || 0}</div>
               <div className="text-slate-400 text-sm">Activities Completed</div>
             </div>
             <div className="text-center">
-              <div className="text-2xl font-bold text-white">{state.activities.length - state.user.completedActivities.length}</div>
+              <div className="text-2xl font-bold text-white">0</div>
               <div className="text-slate-400 text-sm">Remaining</div>
             </div>
           </div>
@@ -305,7 +316,7 @@ export default function ProfilePage() {
           <div className="mt-4 pt-4 border-t border-slate-700">
             <div className="text-center">
               <div className="text-lg font-semibold text-indigo-400">
-                {Math.round((state.user.completedActivities.length / state.activities.length) * 100)}%
+                0%
               </div>
               <div className="text-slate-400 text-sm">Completion Rate</div>
             </div>

@@ -1,251 +1,244 @@
 import React, { useState } from 'react'
-import { Trophy, Medal, Crown, Flame, TrendingUp, Calendar, Users } from 'lucide-react'
+import { ArrowLeft, Trophy, Medal, Crown, TrendingUp, Flame, Star } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 
 export default function LeaderboardPage() {
+  const navigate = useNavigate()
   const { state } = useApp()
-  const [timeFilter, setTimeFilter] = useState<'week' | 'month' | 'all'>('week')
+  const [selectedPeriod, setSelectedPeriod] = useState<'weekly' | 'monthly' | 'all-time'>('weekly')
 
-  // Add current user to leaderboard for demo
-  const leaderboardData = [
-    ...state.leaderboard,
-    {
-      id: state.user?.id || 'current-user',
-      name: state.user?.name || 'You',
-      avatar: state.user?.avatar || '',
-      tokens: state.user?.tokens || 0,
-      level: state.user?.level || 1,
-      badges: state.user?.badges.length || 0,
-      streak: state.user?.streak || 0
-    }
-  ].sort((a, b) => b.tokens - a.tokens)
+  const periods = [
+    { id: 'weekly', label: 'This Week' },
+    { id: 'monthly', label: 'This Month' },
+    { id: 'all-time', label: 'All Time' }
+  ]
 
   const getRankIcon = (rank: number) => {
     switch (rank) {
       case 1: return <Crown className="text-yellow-400" size={24} />
       case 2: return <Medal className="text-gray-400" size={24} />
-      case 3: return <Medal className="text-amber-600" size={24} />
-      default: return <span className="text-slate-400 font-bold text-lg">#{rank}</span>
+      case 3: return <Medal className="text-orange-400" size={24} />
+      default: return <div className="w-6 h-6 rounded-full bg-slate-600 flex items-center justify-center text-white text-sm font-bold">{rank}</div>
     }
   }
 
   const getRankBg = (rank: number) => {
     switch (rank) {
-      case 1: return 'bg-gradient-to-r from-yellow-400/20 to-orange-500/20 border border-yellow-400/30'
-      case 2: return 'bg-gradient-to-r from-gray-400/20 to-slate-500/20 border border-gray-400/30'
-      case 3: return 'bg-gradient-to-r from-amber-600/20 to-yellow-600/20 border border-amber-600/30'
-      default: return 'bg-slate-800 border border-slate-700'
+      case 1: return 'bg-gradient-to-r from-yellow-500/20 to-orange-500/20 border-yellow-500/30'
+      case 2: return 'bg-gradient-to-r from-gray-400/20 to-slate-500/20 border-gray-400/30'
+      case 3: return 'bg-gradient-to-r from-orange-500/20 to-red-500/20 border-orange-500/30'
+      default: return 'bg-slate-800 border-slate-700'
     }
   }
 
-  const currentUserRank = leaderboardData.findIndex(user => user.id === state.user?.id) + 1
+  const currentUserRank = state.leaderboard.findIndex(user => user.id === state.user?.id) + 1
 
   return (
-    <div className="mobile-nav-height">
+    <div className="mobile-nav-height bg-slate-900">
       {/* Header */}
-      <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-6 py-8">
-        <div className="flex items-center justify-between">
+      <div className="bg-gradient-to-r from-yellow-600 to-orange-600 px-6 py-6">
+        <div className="flex items-center space-x-4 mb-6">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="p-2 rounded-lg bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors"
+          >
+            <ArrowLeft className="text-white" size={20} />
+          </button>
           <div>
             <h1 className="text-2xl font-bold text-white">Leaderboard</h1>
-            <p className="text-amber-100">See who's leading the pack</p>
-          </div>
-          <div className="p-3 bg-white/20 backdrop-blur-sm rounded-2xl">
-            <Trophy className="text-white" size={24} />
+            <p className="text-orange-200">Compete with players worldwide</p>
           </div>
         </div>
 
         {/* Your Rank */}
-        {state.user && (
-          <div className="mt-6 bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <div className="w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm overflow-hidden">
-                  <img
-                    src={state.user.avatar}
-                    alt={state.user.name}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-                <div>
-                  <div className="text-white font-semibold">Your Position</div>
-                  <div className="text-amber-100 text-sm">#{currentUserRank} • {state.user.tokens} tokens</div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-2xl font-bold text-white">#{currentUserRank}</div>
-                <div className="text-amber-100 text-sm">Rank</div>
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <img
+                src={state.user?.avatar}
+                alt={state.user?.name}
+                className="w-12 h-12 rounded-full"
+              />
+              <div>
+                <p className="text-white font-semibold">{state.user?.name}</p>
+                <p className="text-orange-200 text-sm">Your current rank</p>
               </div>
             </div>
-          </div>
-        )}
-      </div>
-
-      {/* Time Filter */}
-      <div className="px-6 -mt-4 mb-6">
-        <div className="bg-slate-800/90 backdrop-blur-sm rounded-2xl p-2">
-          <div className="grid grid-cols-3">
-            {[
-              { key: 'week', label: 'This Week', icon: Calendar },
-              { key: 'month', label: 'This Month', icon: TrendingUp },
-              { key: 'all', label: 'All Time', icon: Users }
-            ].map((filter) => {
-              const Icon = filter.icon
-              return (
-                <button
-                  key={filter.key}
-                  onClick={() => setTimeFilter(filter.key as any)}
-                  className={`flex items-center justify-center space-x-2 py-3 rounded-xl text-sm font-medium transition-colors ${
-                    timeFilter === filter.key
-                      ? 'bg-amber-600 text-white'
-                      : 'text-slate-300 hover:text-white hover:bg-slate-700'
-                  }`}
-                >
-                  <Icon size={16} />
-                  <span>{filter.label}</span>
-                </button>
-              )
-            })}
+            <div className="text-right">
+              <div className="text-2xl font-bold text-white">#{currentUserRank || '---'}</div>
+              <p className="text-orange-200 text-sm">{state.user?.tokens} tokens</p>
+            </div>
           </div>
         </div>
       </div>
 
+      {/* Period Filter */}
+      <div className="px-6 py-4">
+        <div className="flex space-x-2 overflow-x-auto scrollbar-hide">
+          {periods.map((period) => (
+            <button
+              key={period.id}
+              onClick={() => setSelectedPeriod(period.id as any)}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-colors flex-shrink-0 ${
+                selectedPeriod === period.id
+                  ? 'bg-yellow-600 text-white'
+                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+              }`}
+            >
+              {period.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Top 3 Podium */}
-      <div className="px-6 mb-8">
-        <div className="flex items-end justify-center space-x-4 h-32">
-          {/* 2nd Place */}
-          {leaderboardData[1] && (
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-gray-400 to-slate-500 flex items-center justify-center overflow-hidden mb-2">
-                <img
-                  src={leaderboardData[1].avatar}
-                  alt={leaderboardData[1].name}
-                  className="w-14 h-14 rounded-xl object-cover"
-                />
+      <div className="px-6 py-4">
+        <div className="bg-slate-800 rounded-2xl p-6 mb-6">
+          <h3 className="text-lg font-semibold text-white mb-4 text-center">🏆 Top Performers</h3>
+          
+          <div className="flex items-end justify-center space-x-4">
+            {/* 2nd Place */}
+            {state.leaderboard[1] && (
+              <div className="text-center">
+                <div className="relative">
+                  <img
+                    src={state.leaderboard[1].avatar}
+                    alt={state.leaderboard[1].name}
+                    className="w-16 h-16 rounded-full mx-auto mb-2 border-4 border-gray-400"
+                  />
+                  <div className="absolute -top-2 -right-2">
+                    <Medal className="text-gray-400" size={20} />
+                  </div>
+                </div>
+                <p className="text-white font-medium text-sm">{state.leaderboard[1].name}</p>
+                <p className="text-gray-300 text-xs">{state.leaderboard[1].tokens} tokens</p>
+                <div className="w-16 h-12 bg-gray-400 mt-2 mx-auto rounded-t-lg flex items-end justify-center pb-1">
+                  <span className="text-white font-bold text-sm">2</span>
+                </div>
               </div>
-              <div className="bg-gray-400 w-20 h-16 rounded-t-xl flex flex-col items-center justify-center">
-                <Medal className="text-white" size={20} />
-                <span className="text-white text-xs font-bold">2nd</span>
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* 1st Place */}
-          {leaderboardData[0] && (
-            <div className="flex flex-col items-center">
-              <div className="w-20 h-20 rounded-2xl bg-gradient-to-r from-yellow-400 to-orange-500 flex items-center justify-center overflow-hidden mb-2">
-                <img
-                  src={leaderboardData[0].avatar}
-                  alt={leaderboardData[0].name}
-                  className="w-18 h-18 rounded-xl object-cover"
-                />
+            {/* 1st Place */}
+            {state.leaderboard[0] && (
+              <div className="text-center">
+                <div className="relative">
+                  <img
+                    src={state.leaderboard[0].avatar}
+                    alt={state.leaderboard[0].name}
+                    className="w-20 h-20 rounded-full mx-auto mb-2 border-4 border-yellow-400"
+                  />
+                  <div className="absolute -top-3 -right-1">
+                    <Crown className="text-yellow-400" size={24} />
+                  </div>
+                </div>
+                <p className="text-white font-bold">{state.leaderboard[0].name}</p>
+                <p className="text-yellow-300 text-sm">{state.leaderboard[0].tokens} tokens</p>
+                <div className="w-20 h-16 bg-yellow-400 mt-2 mx-auto rounded-t-lg flex items-end justify-center pb-1">
+                  <span className="text-white font-bold">1</span>
+                </div>
               </div>
-              <div className="bg-yellow-400 w-24 h-20 rounded-t-xl flex flex-col items-center justify-center">
-                <Crown className="text-white" size={24} />
-                <span className="text-white text-xs font-bold">1st</span>
-              </div>
-            </div>
-          )}
+            )}
 
-          {/* 3rd Place */}
-          {leaderboardData[2] && (
-            <div className="flex flex-col items-center">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-r from-amber-600 to-yellow-600 flex items-center justify-center overflow-hidden mb-2">
-                <img
-                  src={leaderboardData[2].avatar}
-                  alt={leaderboardData[2].name}
-                  className="w-14 h-14 rounded-xl object-cover"
-                />
+            {/* 3rd Place */}
+            {state.leaderboard[2] && (
+              <div className="text-center">
+                <div className="relative">
+                  <img
+                    src={state.leaderboard[2].avatar}
+                    alt={state.leaderboard[2].name}
+                    className="w-16 h-16 rounded-full mx-auto mb-2 border-4 border-orange-400"
+                  />
+                  <div className="absolute -top-2 -right-2">
+                    <Medal className="text-orange-400" size={20} />
+                  </div>
+                </div>
+                <p className="text-white font-medium text-sm">{state.leaderboard[2].name}</p>
+                <p className="text-orange-300 text-xs">{state.leaderboard[2].tokens} tokens</p>
+                <div className="w-16 h-8 bg-orange-400 mt-2 mx-auto rounded-t-lg flex items-end justify-center pb-1">
+                  <span className="text-white font-bold text-sm">3</span>
+                </div>
               </div>
-              <div className="bg-amber-600 w-20 h-12 rounded-t-xl flex flex-col items-center justify-center">
-                <Medal className="text-white" size={18} />
-                <span className="text-white text-xs font-bold">3rd</span>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
       {/* Full Leaderboard */}
       <div className="px-6 pb-6">
-        <h3 className="text-lg font-bold text-white mb-4">Full Rankings</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">All Rankings</h3>
         
         <div className="space-y-3">
-          {leaderboardData.map((user, index) => {
-            const rank = index + 1
-            const isCurrentUser = user.id === state.user?.id
-            
-            return (
-              <div
-                key={user.id}
-                className={`${getRankBg(rank)} rounded-2xl p-4 ${
-                  isCurrentUser ? 'ring-2 ring-indigo-500' : ''
-                }`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
-                    <div className="flex items-center justify-center w-12">
-                      {getRankIcon(rank)}
-                    </div>
-                    
-                    <div className="w-12 h-12 rounded-xl overflow-hidden bg-slate-700">
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    
-                    <div>
-                      <div className={`font-semibold ${isCurrentUser ? 'text-indigo-400' : 'text-white'}`}>
-                        {user.name}
-                        {isCurrentUser && <span className="text-indigo-300 text-sm ml-2">(You)</span>}
-                      </div>
-                      <div className="text-slate-400 text-sm">Level {user.level}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="text-right">
-                    <div className="text-xl font-bold text-yellow-400">{user.tokens}</div>
-                    <div className="text-slate-400 text-sm">tokens</div>
-                  </div>
+          {state.leaderboard.map((user, index) => (
+            <div
+              key={user.id}
+              className={`border rounded-2xl p-4 ${getRankBg(index + 1)}`}
+            >
+              <div className="flex items-center space-x-4">
+                <div className="flex-shrink-0">
+                  {getRankIcon(index + 1)}
                 </div>
                 
-                {/* Additional Stats */}
-                <div className="mt-3 pt-3 border-t border-slate-600/50">
-                  <div className="flex items-center justify-between text-sm">
-                    <div className="flex items-center space-x-4">
-                      <div className="flex items-center space-x-1">
-                        <Trophy className="text-slate-400" size={14} />
-                        <span className="text-slate-300">{user.badges} badges</span>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <Flame className="text-orange-400" size={14} />
-                        <span className="text-slate-300">{user.streak} day streak</span>
-                      </div>
-                    </div>
-                    
-                    {rank <= 3 && (
-                      <div className="flex items-center space-x-1">
-                        <span className="text-xs text-slate-400">Top 3!</span>
-                        <Trophy className="text-yellow-400" size={12} />
-                      </div>
+                <img
+                  src={user.avatar}
+                  alt={user.name}
+                  className="w-12 h-12 rounded-full"
+                />
+                
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2">
+                    <h4 className="font-semibold text-white">{user.name}</h4>
+                    {user.id === state.user?.id && (
+                      <span className="px-2 py-1 bg-indigo-500/20 text-indigo-300 text-xs rounded-full">
+                        You
+                      </span>
                     )}
+                  </div>
+                  <p className="text-sm text-slate-400">Level {user.level}</p>
+                </div>
+                
+                <div className="text-right">
+                  <div className="flex items-center space-x-1 mb-1">
+                    <Trophy className="text-yellow-400" size={16} />
+                    <span className="font-bold text-white">{user.tokens}</span>
+                  </div>
+                  <div className="flex items-center space-x-3 text-xs text-slate-400">
+                    <div className="flex items-center space-x-1">
+                      <Flame size={12} />
+                      <span>{user.streak}d</span>
+                    </div>
+                    <div className="flex items-center space-x-1">
+                      <Star size={12} />
+                      <span>{user.badges}</span>
+                    </div>
                   </div>
                 </div>
               </div>
-            )
-          })}
+            </div>
+          ))}
         </div>
-        
-        {/* Coming Soon */}
-        <div className="mt-8 bg-slate-800/50 border-2 border-dashed border-slate-600 rounded-2xl p-6 text-center">
-          <div className="p-3 bg-slate-700/50 rounded-full w-fit mx-auto mb-4">
-            <TrendingUp className="text-slate-400" size={24} />
+      </div>
+
+      {/* Climb the Ranks */}
+      <div className="px-6 pb-6">
+        <div className="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-6">
+          <div className="flex items-center space-x-4">
+            <div className="p-3 bg-white/20 rounded-full">
+              <TrendingUp className="text-white" size={24} />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-white mb-1">Climb the Ranks!</h3>
+              <p className="text-indigo-100 text-sm">
+                Complete more activities to earn tokens and move up the leaderboard
+              </p>
+            </div>
           </div>
-          <h3 className="text-lg font-semibold text-white mb-2">Global Competition Coming Soon</h3>
-          <p className="text-slate-400 text-sm max-w-sm mx-auto">
-            Compete with users worldwide and win exclusive rewards in upcoming tournaments!
-          </p>
+          <button
+            onClick={() => navigate('/activities')}
+            className="w-full mt-4 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-medium rounded-xl transition-colors"
+          >
+            Play More Games
+          </button>
         </div>
       </div>
     </div>
