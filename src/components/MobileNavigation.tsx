@@ -1,20 +1,24 @@
 import React from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Home, Trophy, Gamepad2, Wallet, User } from 'lucide-react'
+import { useI18n } from '../context/I18nContext'
+import { useApp } from '../context/AppContext'
 
 export default function MobileNavigation() {
   const navigate = useNavigate()
   const location = useLocation()
+  const { t } = useI18n()
+  const { speak } = useApp()
   
   // Don't show navigation on landing page
   if (location.pathname === '/') return null
 
   const navItems = [
-    { id: 'dashboard', label: 'Home', icon: Home, path: '/dashboard' },
-    { id: 'activities', label: 'Activities', icon: Gamepad2, path: '/activities' },
-    { id: 'wallet', label: 'Wallet', icon: Wallet, path: '/wallet' },
-    { id: 'leaderboard', label: 'Ranking', icon: Trophy, path: '/leaderboard' },
-    { id: 'profile', label: 'Profile', icon: User, path: '/profile' }
+    { id: 'dashboard', label: t('nav.home'), icon: Home, path: '/dashboard' },
+    { id: 'activities', label: t('nav.activities'), icon: Gamepad2, path: '/activities' },
+    { id: 'wallet', label: t('nav.wallet'), icon: Wallet, path: '/wallet' },
+    { id: 'leaderboard', label: t('nav.leaderboard'), icon: Trophy, path: '/leaderboard' },
+    { id: 'profile', label: t('nav.profile'), icon: User, path: '/profile' }
   ]
 
   return (
@@ -27,7 +31,10 @@ export default function MobileNavigation() {
           return (
             <button
               key={item.id}
-              onClick={() => navigate(item.path)}
+              onClick={() => {
+                speak(item.label)
+                navigate(item.path)
+              }}
               className={`flex flex-col items-center justify-center space-y-1 transition-colors ${
                 isActive 
                   ? 'text-indigo-400' 

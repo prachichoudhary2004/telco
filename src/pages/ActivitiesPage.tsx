@@ -3,6 +3,7 @@ import { ArrowLeft, Play, Clock, Trophy, Zap, Star, Filter, Search } from 'lucid
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
 import { useConfetti } from '../components/ConfettiProvider'
+import { useI18n } from '../context/I18nContext'
 
 // Game Components
 import QuizGame from '../components/games/QuizGame'
@@ -13,8 +14,9 @@ import StrategyGame from '../components/games/StrategyGame'
 
 export default function ActivitiesPage() {
   const navigate = useNavigate()
-  const { state, completeActivity, earnBadge, openAIModal } = useApp()
+  const { state, completeActivity, earnBadge, openAIModal, speak } = useApp()
   const { celebrate } = useConfetti()
+  const { t } = useI18n()
   
   const [selectedFilter, setSelectedFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState('')
@@ -55,6 +57,7 @@ export default function ActivitiesPage() {
     
     // Show celebration
     celebrate(perfect ? 'perfect' : 'complete')
+    speak(perfect ? 'Perfect!' : 'Great Job!')
     
     // Check for badges
     checkForBadges(activityId, score, perfect)
@@ -177,8 +180,8 @@ export default function ActivitiesPage() {
             <ArrowLeft className="text-white" size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-white">Activities</h1>
-            <p className="text-purple-200">Play games and earn rewards</p>
+            <h1 className="text-2xl font-bold text-white">{t('activities.title')}</h1>
+            <p className="text-purple-200">{t('activities.subtitle')}</p>
           </div>
         </div>
 
@@ -187,10 +190,10 @@ export default function ActivitiesPage() {
           <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400" size={20} />
           <input
             type="text"
-            placeholder="Search activities..."
+            placeholder={t('activities.search_placeholder')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-white/30"
+            className="w-full pl-12 pr-4 py-3 bg_white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-slate-300 focus:outline-none focus:ring-2 focus:ring-white/30"
           />
         </div>
       </div>
@@ -235,7 +238,7 @@ export default function ActivitiesPage() {
                 {activity.completed && (
                   <div className="flex items-center space-x-1 text-green-400">
                     <Trophy size={16} />
-                    <span className="text-xs font-medium">Completed</span>
+                    <span className="text-xs font-medium">{t('activities.completed')}</span>
                   </div>
                 )}
               </div>
@@ -247,7 +250,7 @@ export default function ActivitiesPage() {
                     <Trophy className="text-yellow-400" size={16} />
                   </div>
                   <div className="text-sm font-semibold text-white">{activity.tokens}</div>
-                  <div className="text-xs text-slate-400">Tokens</div>
+                  <div className="text-xs text-slate-400">{t('activities.tokens')}</div>
                 </div>
                 
                 <div className="bg-slate-700/50 rounded-lg p-3 text-center">
@@ -255,7 +258,7 @@ export default function ActivitiesPage() {
                     <Zap className="text-blue-400" size={16} />
                   </div>
                   <div className="text-sm font-semibold text-white">{activity.xp}</div>
-                  <div className="text-xs text-slate-400">XP</div>
+                  <div className="text-xs text-slate-400">{t('activities.xp')}</div>
                 </div>
                 
                 <div className="bg-slate-700/50 rounded-lg p-3 text-center">
@@ -263,7 +266,7 @@ export default function ActivitiesPage() {
                     <Clock className="text-purple-400" size={16} />
                   </div>
                   <div className="text-sm font-semibold text-white">{activity.duration}</div>
-                  <div className="text-xs text-slate-400">min</div>
+                  <div className="text-xs text-slate-400">{t('activities.min')}</div>
                 </div>
               </div>
 
@@ -280,16 +283,22 @@ export default function ActivitiesPage() {
               {/* Action Buttons */}
               <div className="flex space-x-3">
                 <button
-                  onClick={() => setCurrentGame(activity.id)}
+                  onClick={() => {
+                    speak(activity.completed ? t('activities.play_again') : t('activities.start'))
+                    setCurrentGame(activity.id)
+                  }}
                   className="flex-1 bg-indigo-600 hover:bg-indigo-700 rounded-xl py-3 px-4 text-white font-medium transition-colors flex items-center justify-center space-x-2"
                 >
                   <Play size={16} />
-                  <span>{activity.completed ? 'Play Again' : 'Start'}</span>
+                  <span>{activity.completed ? t('activities.play_again') : t('activities.start')}</span>
                 </button>
                 
                 {activity.completed && (
                   <button
-                    onClick={() => openAIModal(activity)}
+                    onClick={() => {
+                      speak('AI')
+                      openAIModal(activity)
+                    }}
                     className="px-4 py-3 bg-purple-600 hover:bg-purple-700 rounded-xl text-white transition-colors"
                   >
                     <Star size={16} />
@@ -304,8 +313,8 @@ export default function ActivitiesPage() {
         {filteredActivities.length === 0 && (
           <div className="text-center py-12">
             <div className="text-6xl mb-4">🎯</div>
-            <h3 className="text-xl font-semibold text-white mb-2">No activities found</h3>
-            <p className="text-slate-400">Try adjusting your search or filters</p>
+            <h3 className="text-xl font-semibold text-white mb-2">{t('activities.empty_title')}</h3>
+            <p className="text-slate-400">{t('activities.empty_desc')}</p>
           </div>
         )}
       </div>

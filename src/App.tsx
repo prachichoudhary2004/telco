@@ -1,6 +1,8 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AppProvider } from './context/AppContext'
+import { AuthProvider } from './context/AuthContext'
+import { I18nProvider } from './context/I18nContext'
 import { ConfettiProvider } from './components/ConfettiProvider'
 import { OfflineProvider } from './context/OfflineContext'
 
@@ -20,9 +22,11 @@ import AIAssistantModal from './components/AIAssisstantModal'
 function App() {
   return (
     <OfflineProvider>
-      <AppProvider>
-        <ConfettiProvider>
-          <Router>
+      <AuthProvider>
+        <I18nProvider>
+          <AppProvider>
+            <ConfettiProvider>
+              <Router>
             <div className="min-h-screen bg-slate-900">
               <OfflineBanner />
               
@@ -36,12 +40,14 @@ function App() {
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Routes>
 
-              <MobileNavigation />
-              <AIAssistantModal />
-            </div>
-          </Router>
-        </ConfettiProvider>
-      </AppProvider>
+                <MobileNavigation />
+                <AIAssistantModal />
+              </div>
+              </Router>
+            </ConfettiProvider>
+          </AppProvider>
+        </I18nProvider>
+      </AuthProvider>
     </OfflineProvider>
   )
 }

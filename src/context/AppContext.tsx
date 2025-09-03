@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react'
 import { mockLeaderboard, mockBadges, mockTelcoPerks } from '../utils/mockData'
+import { useAuth } from './AuthContext'
 
 // Types
 interface User {
@@ -382,6 +383,7 @@ const AppContext = createContext<{
 // Provider
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(appReducer, initialState)
+  const auth = useAuth()
 
   // Load user from localStorage on mount
   useEffect(() => {
@@ -395,6 +397,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     }
   }, [])
+
+  // Sync language with AuthContext if it changes
+  useEffect(() => {
+    const lang = auth.state.user?.language
+    if (lang && lang !== state.language) {
+      dispatch({ type: 'SET_LANGUAGE', payload: lang })
+    }
+  }, [auth.state.user?.language])
 
   // Helper functions
   const loginUser = (userData: Partial<User>) => {
@@ -452,9 +462,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const speak = (text: string) => {
-    if (state.user?.ttsEnabled && 'speechSynthesis' in window) {
+    const tts = auth.state.user?.tts_enabled
+    const lang = auth.state.user?.language || state.language
+    if (tts && 'speechSynthesis' in window) {
       const utterance = new SpeechSynthesisUtterance(text)
-      utterance.lang = state.language === 'hi' ? 'hi-IN' : 'en-US'
+      utterance.lang = lang === 'hi' ? 'hi-IN' : 'en-US'
       speechSynthesis.speak(utterance)
     }
   }

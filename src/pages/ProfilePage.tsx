@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { User, Settings, Trophy, Flame, Edit3, Save, X, Volume2, VolumeX, Globe, LogOut } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
 
@@ -31,6 +31,12 @@ export default function ProfilePage() {
   const handleLanguageChange = async (language: 'en' | 'hi') => {
     try {
       await updateProfile({ language })
+      // Speak confirmation in the newly selected language if TTS is enabled
+      if ('speechSynthesis' in window && state.user?.tts_enabled) {
+        const utter = new SpeechSynthesisUtterance(language === 'hi' ? 'भाषा बदली गई' : 'Language changed')
+        utter.lang = language === 'hi' ? 'hi-IN' : 'en-US'
+        speechSynthesis.speak(utter)
+      }
     } catch (error) {
       console.error('Failed to update language:', error)
     }
@@ -39,6 +45,13 @@ export default function ProfilePage() {
   const handleTTSToggle = async () => {
     try {
       await updateProfile({ tts_enabled: !state.user.tts_enabled })
+      // Provide audible feedback after toggling
+      const enabled = !state.user.tts_enabled
+      if ('speechSynthesis' in window && enabled) {
+        const utter = new SpeechSynthesisUtterance(state.user.language === 'hi' ? 'आवाज सक्षम' : 'Voice enabled')
+        utter.lang = state.user.language === 'hi' ? 'hi-IN' : 'en-US'
+        speechSynthesis.speak(utter)
+      }
     } catch (error) {
       console.error('Failed to toggle TTS:', error)
     }
@@ -68,6 +81,14 @@ export default function ProfilePage() {
       default: return 'bg-slate-500/20 text-slate-400'
     }
   }
+
+  useEffect(() => {
+    if ('speechSynthesis' in window && state.user?.tts_enabled) {
+      const utter = new SpeechSynthesisUtterance(state.user.language === 'hi' ? 'प्रोफ़ाइल पृष्ठ' : 'Profile page')
+      utter.lang = state.user.language === 'hi' ? 'hi-IN' : 'en-US'
+      speechSynthesis.speak(utter)
+    }
+  }, [state.user?.tts_enabled, state.user?.language])
 
   return (
     <div className="mobile-nav-height">

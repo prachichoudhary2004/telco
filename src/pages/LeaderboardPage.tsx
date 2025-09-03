@@ -2,11 +2,13 @@ import React, { useState } from 'react'
 import { ArrowLeft, Trophy, Medal, Crown, TrendingUp, Flame, Star } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { useApp } from '../context/AppContext'
+import { useI18n } from '../context/I18nContext'
 
 export default function LeaderboardPage() {
   const navigate = useNavigate()
-  const { state } = useApp()
+  const { state, speak } = useApp()
   const [selectedPeriod, setSelectedPeriod] = useState<'weekly' | 'monthly' | 'all-time'>('weekly')
+  const { t } = useI18n()
 
   const periods = [
     { id: 'weekly', label: 'This Week' },
@@ -40,20 +42,23 @@ export default function LeaderboardPage() {
       <div className="bg-gradient-to-r from-yellow-600 to-orange-600 px-6 py-6">
         <div className="flex items-center space-x-4 mb-6">
           <button
-            onClick={() => navigate('/dashboard')}
+            onClick={() => {
+              speak(t('nav.home'))
+              navigate('/dashboard')
+            }}
             className="p-2 rounded-lg bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors"
           >
             <ArrowLeft className="text-white" size={20} />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-white">Leaderboard</h1>
-            <p className="text-orange-200">Compete with players worldwide</p>
+            <h1 className="text-2xl font-bold text-white">{t('leaderboard.title')}</h1>
+            <p className="text-orange-200">{t('leaderboard.subtitle')}</p>
           </div>
         </div>
 
         {/* Your Rank */}
         <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify_between">
             <div className="flex items-center space-x-4">
               <img
                 src={state.user?.avatar}
@@ -62,7 +67,7 @@ export default function LeaderboardPage() {
               />
               <div>
                 <p className="text-white font-semibold">{state.user?.name}</p>
-                <p className="text-orange-200 text-sm">Your current rank</p>
+                <p className="text-orange-200 text-sm">{t('leaderboard.your_rank')}</p>
               </div>
             </div>
             <div className="text-right">
@@ -95,7 +100,7 @@ export default function LeaderboardPage() {
       {/* Top 3 Podium */}
       <div className="px-6 py-4">
         <div className="bg-slate-800 rounded-2xl p-6 mb-6">
-          <h3 className="text-lg font-semibold text-white mb-4 text-center">🏆 Top Performers</h3>
+          <h3 className="text-lg font-semibold text-white mb-4 text-center">🏆 {t('leaderboard.top_performers')}</h3>
           
           <div className="flex items-end justify-center space-x-4">
             {/* 2nd Place */}
@@ -166,7 +171,7 @@ export default function LeaderboardPage() {
 
       {/* Full Leaderboard */}
       <div className="px-6 pb-6">
-        <h3 className="text-lg font-semibold text-white mb-4">All Rankings</h3>
+        <h3 className="text-lg font-semibold text-white mb-4">{t('leaderboard.all_rankings')}</h3>
         
         <div className="space-y-3">
           {state.leaderboard.map((user, index) => (
@@ -190,15 +195,15 @@ export default function LeaderboardPage() {
                     <h4 className="font-semibold text-white">{user.name}</h4>
                     {user.id === state.user?.id && (
                       <span className="px-2 py-1 bg-indigo-500/20 text-indigo-300 text-xs rounded-full">
-                        You
+                        {t('leaderboard.you')}
                       </span>
                     )}
                   </div>
-                  <p className="text-sm text-slate-400">Level {user.level}</p>
+                  <p className="text-sm text-slate-400">{t('leaderboard.level')} {user.level}</p>
                 </div>
                 
                 <div className="text-right">
-                  <div className="flex items-center space-x-1 mb-1">
+                  <div className="flex items_center space-x-1 mb-1">
                     <Trophy className="text-yellow-400" size={16} />
                     <span className="font-bold text-white">{user.tokens}</span>
                   </div>
@@ -227,17 +232,20 @@ export default function LeaderboardPage() {
               <TrendingUp className="text-white" size={24} />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-white mb-1">Climb the Ranks!</h3>
+              <h3 className="font-semibold text-white mb-1">{t('leaderboard.climb_title')}</h3>
               <p className="text-indigo-100 text-sm">
-                Complete more activities to earn tokens and move up the leaderboard
+                {t('leaderboard.climb_desc')}
               </p>
             </div>
           </div>
           <button
-            onClick={() => navigate('/activities')}
+            onClick={() => {
+              speak(t('leaderboard.play_more'))
+              navigate('/activities')
+            }}
             className="w-full mt-4 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white font-medium rounded-xl transition-colors"
           >
-            Play More Games
+            {t('leaderboard.play_more')}
           </button>
         </div>
       </div>

@@ -124,6 +124,23 @@ const AuthContext = createContext<{
 // Provider
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState)
+  const LOCAL_USER_KEY = 'telco-auth-user'
+
+  const createDefaultUser = (): User => ({
+    id: 'guest-' + Date.now(),
+    name: 'Guest User',
+    email: 'guest@example.com',
+    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=guest`,
+    level: 1,
+    xp: 0,
+    tokens: 100,
+    streak: 1,
+    last_login: new Date().toISOString(),
+    badges: [],
+    completedActivities: [],
+    language: 'en',
+    tts_enabled: false,
+  })
 
   // Check for existing token on mount
   useEffect(() => {
@@ -137,10 +154,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         } catch (error) {
           console.error('Auth check failed:', error)
           apiService.setToken(null)
-          dispatch({ type: 'AUTH_FAILURE', payload: 'Session expired' })
+          // Fallback to local user if exists, else create guest
+          const saved = localStorage.getItem(LOCAL_USER_KEY)
+          if (saved) {
+            try {
+              const user = JSON.parse(saved) as User
+              dispatch({ type: 'AUTH_SUCCESS', payload: user })
+            } catch {
+              dispatch({ type: 'AUTH_SUCCESS', payload: createDefaultUser() })
+            }
+          } else {
+            dispatch({ type: 'AUTH_SUCCESS', payload: createDefaultUser() })
+          }
         }
       } else {
-        dispatch({ type: 'AUTH_FAILURE', payload: 'No token found' })
+        // Try local user first, else create guest
+        const saved = localStorage.getItem(LOCAL_USER_KEY)
+        if (saved) {
+          try {
+            const user = JSON.parse(saved) as User
+            dispatch({ type: 'AUTH_SUCCESS', payload: user })
+          } catch {
+            const guest = createDefaultUser()
+            localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(guest))
+            dispatch({ type: 'AUTH_SUCCESS', payload: guest })
+          }
+        } else {
+          const guest = createDefaultUser()
+          localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(guest))
+          dispatch({ type: 'AUTH_SUCCESS', payload: guest })
+        }
       }
     }
 
@@ -151,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       dispatch({ type: 'AUTH_START' })
       const response = await apiService.login({ email, password })
+      localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(response.user))
       dispatch({ type: 'AUTH_SUCCESS', payload: response.user })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Login failed'
@@ -163,6 +207,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       dispatch({ type: 'AUTH_START' })
       const response = await apiService.register(userData)
+      localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(response.user))
       dispatch({ type: 'AUTH_SUCCESS', payload: response.user })
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Registration failed'
@@ -177,6 +222,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error) {
       console.error('Logout error:', error)
     } finally {
+      localStorage.removeItem(LOCAL_USER_KEY)
       dispatch({ type: 'LOGOUT' })
     }
   }
@@ -184,11 +230,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const updateProfile = async (updates: Partial<User>) => {
     try {
       const response = await apiService.updateProfile(updates)
+      localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(response.user))
       dispatch({ type: 'UPDATE_USER', payload: response.user })
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Profile update failed'
-      dispatch({ type: 'AUTH_FAILURE', payload: errorMessage })
-      throw error
+      // Fallback to local update when backend is unavailable
+      if (state.user) {
+        const updatedLocal = { ...state.user, ...updates }
+        localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(updatedLocal))
+        dispatch({ type: 'UPDATE_USER', payload: updatedLocal })
+      } else {
+        const guest = { ...createDefaultUser(), ...updates }
+        localStorage.setItem(LOCAL_USER_KEY, JSON.stringify(guest))
+        dispatch({ type: 'UPDATE_USER', payload: guest })
+      }
     }
   }
 
